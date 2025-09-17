@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktivní Harmonogram Akce - 50. Výročí Školy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Study -->
+    <!-- Application Structure Plan: A dashboard-style single-page application. The top section provides a static overview of the day's main events. The central part is an interactive dashboard allowing users to filter the detailed schedule either by student group or by activity station using dropdown menus. This provides immediate access to task-specific information, which is more user-friendly than scanning a large table. Additionally, a doughnut chart visualizes the thematic distribution of activities, offering a quick analytical insight. This structure was chosen to transform the static reports into a user-centric tool that answers the most likely questions from organizers and teachers efficiently. -->
+    <!-- Visualization & Content Choices: 
+        1. Main Timeline (Report Info: Harmonogram_akce.md) -> Goal: Inform -> Presentation: Styled cards (HTML/Tailwind) -> Interaction: None -> Justification: Provides high-level context of the day's flow.
+        2. Interactive Schedule (Report Info: Rozpis_stanovišť.md) -> Goal: Organize/Filter -> Presentation: Dropdown filters and a dynamically updated content area -> Interaction: User selects a group or station, JS filters data and updates the view -> Justification: Core interactive feature. Allows users to easily find specific schedules without reading a complex grid. Method: Vanilla JS.
+        3. Activity Distribution (Report Info: List of stations) -> Goal: Analyze -> Presentation: Doughnut Chart -> Interaction: Hover tooltips -> Justification: Gives a quick visual summary of the types of activities planned for the day. Library: Chart.js.
+        4. Master Schedule (Report Info: Rozpis_stanovišť.md) -> Goal: Compare/Reference -> Presentation: Full HTML table inside a collapsible element -> Interaction: Click to expand/collapse -> Justification: Provides access to all data for users who need a complete overview, but keeps the main interface clean. Method: HTML <details> tag.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #333;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .photo-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Harmonogram Akce</h1>
+            <p class="text-lg md:text-xl text-gray-600 mt-2">Oslava 50. výročí založení školy</p>
+        </header>
+
+        <main>
+            <section id="timeline" class="mb-12">
+                <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">Hlavní body dne</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-teal-600">8:00 - 8:15</p>
+                        <p class="text-gray-700">Slavnostní zahájení</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-teal-600">8:15 - 8:30</p>
+                        <p class="text-gray-700">Vystoupení 1. třídy</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 col-span-1 lg:col-span-1">
+                        <p class="font-bold text-lg text-sky-600">8:30 - 12:30</p>
+                        <p class="text-gray-700">Program na stanovištích</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-amber-600">9:30 - 9:50</p>
+                        <p class="text-gray-700">Svačinová přestávka</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-rose-600">12:30</p>
+                        <p class="text-gray-700">Ukončení akce</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interactive-dashboard" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-700">Interaktivní přehled programu</h2>
+                    <p class="text-gray-600 mt-2">Zvolte skupinu nebo stanoviště pro zobrazení detailního časového plánu.</p>
+                </div>
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-6">
+                    <div class="w-full md:w-1/3">
+                        <label for="group-select" class="block text-sm font-medium text-gray-700 mb-1">Zobrazit podle skupiny:</label>
+                        <select id="group-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                            <option value="all">Vyberte skupinu</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:w-1/3">
+                        <label for="station-select" class="block text-sm font-medium text-gray-700 mb-1">Zobrazit podle stanoviště:</label>
+                        <select id="station-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                            <option value="all">Vyberte stanoviště</option>
+                        </select>
+                    </div>
+                     <div class="w-full md:w-auto mt-4 md:mt-5">
+                        <button id="reset-button" class="w-full md:w-auto bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors">Resetovat</button>
+                    </div>
+                </div>
+                <div id="schedule-display" class="mt-4 min-h-[200px]">
+                    <p class="text-center text-gray-500">Zde se zobrazí vybraný program.</p>
+                </div>
+            </section>
+            
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
+                <div id="chart-section" class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Rozložení typů aktivit</h2>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                     <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Celkový přehled</h2>
+                     <p class="text-center text-gray-600 mb-4">Níže naleznete kompletní matici rozvrhu pro všechny skupiny a časy. Tato tabulka může být užitečná pro koordinátory a učitele, kteří potřebují vidět celkový obraz dne.</p>
+                     <details class="bg-gray-50 p-4 rounded-md">
+                        <summary class="font-semibold cursor-pointer text-teal-700 hover:text-teal-800">Zobrazit kompletní rozpis stanovišť</summary>
+                        <div class="overflow-x-auto mt-4">
+                            <table id="master-schedule-table" class="min-w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <section id="photo-gallery" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-700">Fotogalerie z akce</h2>
+                    <p class="text-gray-600 mt-2">Sdílejte své fotografie z dnešní akce.</p>
+                </div>
+                <div class="flex flex-col items-center mb-6">
+                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden">
+                    <label for="photo-upload-input" class="cursor-pointer bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 transition-colors font-medium">Nahrát fotku</label>
+                    <div id="upload-status" class="mt-2 text-gray-500 hidden">Nahrávám...</div>
+                </div>
+                <div id="photo-gallery-grid" class="photo-gallery grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <p class="col-span-full text-center text-gray-500">Zde se zobrazí nahrané fotografie.</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // Globalní proměnné pro Firebase a ID aplikace
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth, storage;
+
+        // Inicializace a autentizace
+        const initFirebase = async () => {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                storage = getStorage(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Chyba při přihlašování k Firebase:", error);
+            }
+        };
+
+        const uploadFile = async (file) => {
+            const userId = auth.currentUser?.uid;
+            if (!userId) {
+                const uploadStatus = document.getElementById('upload-status');
+                uploadStatus.textContent = 'Chyba: Pro nahrání fotek se musíte přihlásit.';
+                uploadStatus.classList.remove('hidden');
+                return;
+            }
+
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.textContent = 'Nahrávám...';
+            uploadStatus.classList.remove('hidden');
+
+            const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const storagePath = `artifacts/${appId}/public/images/${uniqueId}-${file.name}`;
+            const storageRef = ref(storage, storagePath);
+
+            try {
+                await uploadBytes(storageRef, file);
+                const photoURL = await getDownloadURL(storageRef);
+
+                await addDoc(collection(db, `artifacts/${appId}/public/data/photos`), {
+                    userId: userId,
+                    photoURL: photoURL,
+                    timestamp: serverTimestamp(),
+                });
+
+                uploadStatus.textContent = 'Fotka úspěšně nahrána!';
+            } catch (error) {
+                console.error("Chyba při nahrávání fotky:", error);
+                uploadStatus.textContent = `Chyba při nahrávání: ${error.message}`;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            await initFirebase();
+            
+            const scheduleData = [
+                { time: '8:30 - 8:50', group: 'Skupina 1', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '8:50 - 9:10', group: 'Skupina 1', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '9:10 - 9:30', group: 'Skupina 1', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '9:50 - 10:10', group: 'Skupina 1', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '10:10 - 10:30', group: 'Skupina 1', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '10:30 - 10:50', group: 'Skupina 1', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '10:50 - 11:10', group: 'Skupina 1', activity: 'Robotika', location: 'Robotika' },
+                { time: '11:10 - 11:30', group: 'Skupina 1', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '11:30 - 11:50', group: 'Skupina 1', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '11:50 - 12:10', group: 'Skupina 1', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '12:10 - 12:30', group: 'Skupina 1', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 2', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '8:50 - 9:10', group: 'Skupina 2', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '9:10 - 9:30', group: 'Skupina 2', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '9:50 - 10:10', group: 'Skupina 2', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '10:10 - 10:30', group: 'Skupina 2', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '10:30 - 10:50', group: 'Skupina 2', activity: 'Robotika', location: 'Robotika' },
+                { time: '10:50 - 11:10', group: 'Skupina 2', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '11:10 - 11:30', group: 'Skupina 2', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '11:30 - 11:50', group: 'Skupina 2', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '11:50 - 12:10', group: 'Skupina 2', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '12:10 - 12:30', group: 'Skupina 2', activity: 'Malování karikatur', location: 'Před školou' },
+                
+                { time: '8:30 - 8:50', group: 'Skupina 3', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '8:50 - 9:10', group: 'Skupina 3', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '9:10 - 9:30', group: 'Skupina 3', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '9:50 - 10:10', group: 'Skupina 3', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '10:10 - 10:30', group: 'Skupina 3', activity: 'Robotika', location: 'Robotika' },
+                { time: '10:30 - 10:50', group: 'Skupina 3', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '10:50 - 11:10', group: 'Skupina 3', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '11:10 - 11:30', group: 'Skupina 3', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '11:30 - 11:50', group: 'Skupina 3', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '11:50 - 12:10', group: 'Skupina 3', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '12:10 - 12:30', group: 'Skupina 3', activity: 'Retro třída', location: 'Učebna 503' },
+                
+                { time: '8:30 - 8:50', group: 'Skupina 4', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '8:50 - 9:10', group: 'Skupina 4', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '9:10 - 9:30', group: 'Skupina 4', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '9:50 - 10:10', group: 'Skupina 4', activity: 'Robotika', location: 'Robotika' },
+                { time: '10:10 - 10:30', group: 'Skupina 4', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '10:30 - 10:50', group: 'Skupina 4', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '10:50 - 11:10', group: 'Skupina 4', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '11:10 - 11:30', group: 'Skupina 4', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '11:30 - 11:50', group: 'Skupina 4', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '11:50 - 12:10', group: 'Skupina 4', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '12:10 - 12:30', group: 'Skupina 4', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 5', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '8:50 - 9:10', group: 'Skupina 5', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '9:10 - 9:30', group: 'Skupina 5', activity: 'Robotika', location: 'Robotika' },
+                { time: '9:50 - 10:10', group: 'Skupina 5', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '10:10 - 10:30', group: 'Skupina 5', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '10:30 - 10:50', group: 'Skupina 5', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '10:50 - 11:10', group: 'Skupina 5', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '11:10 - 11:30', group: 'Skupina 5', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '11:30 - 11:50', group: 'Skupina 5', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '11:50 - 12:10', group: 'Skupina 5', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '12:10 - 12:30', group: 'Skupina 5', activity: 'Kreativní dílna', location: 'Učebna 302' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 6', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '8:50 - 9:10', group: 'Skupina 6', activity: 'Robotika', location: 'Robotika' },
+                { time: '9:10 - 9:30', group: 'Skupina 6', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '9:50 - 10:10', group: 'Skupina 6', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '10:10 - 10:30', group: 'Skupina 6', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '10:30 - 10:50', group: 'Skupina 6', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '10:50 - 11:10', group: 'Skupina 6', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '11:10 - 11:30', group: 'Skupina 6', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '11:30 - 11:50', group: 'Skupina 6', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '11:50 - 12:10', group: 'Skupina 6', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '12:10 - 12:30', group: 'Skupina 6', activity: 'Školní kvíz', location: 'Učebna 504' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 7', activity: 'Robotika', location: 'Robotika' },
+                { time: '8:50 - 9:10', group: 'Skupina 7', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '9:10 - 9:30', group: 'Skupina 7', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '9:50 - 10:10', group: 'Skupina 7', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '10:10 - 10:30', group: 'Skupina 7', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '10:30 - 10:50', group: 'Skupina 7', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '10:50 - 11:10', group: 'Skupina 7', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '11:10 - 11:30', group: 'Skupina 7', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '11:30 - 11:50', group: 'Skupina 7', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '11:50 - 12:10', group: 'Skupina 7', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '12:10 - 12:30', group: 'Skupina 7', activity: 'Hravá věda', location: 'Učebna 508' },
+                
+                { time: '8:30 - 8:50', group: 'Skupina 8', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '8:50 - 9:10', group: 'Skupina 8', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '9:10 - 9:30', group: 'Skupina 8', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '9:50 - 10:10', group: 'Skupina 8', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '10:10 - 10:30', group: 'Skupina 8', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '10:30 - 10:50', group: 'Skupina 8', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '10:50 - 11:10', group: 'Skupina 8', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '11:10 - 11:30', group: 'Skupina 8', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '11:30 - 11:50', group: 'Skupina 8', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '11:50 - 12:10', group: 'Skupina 8', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '12:10 - 12:30', group: 'Skupina 8', activity: 'Robotika', location: 'Robotika' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 9', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '8:50 - 9:10', group: 'Skupina 9', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '9:10 - 9:30', group: 'Skupina 9', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '9:50 - 10:10', group: 'Skupina 9', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '10:10 - 10:30', group: 'Skupina 9', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '10:30 - 10:50', group: 'Skupina 9', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '10:50 - 11:10', group: 'Skupina 9', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '11:10 - 11:30', group: 'Skupina 9', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '11:30 - 11:50', group: 'Skupina 9', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '11:50 - 12:10', group: 'Skupina 9', activity: 'Robotika', location: 'Robotika' },
+                { time: '12:10 - 12:30', group: 'Skupina 9', activity: 'Stolní hry', location: 'Učebna 305' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 10', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+                { time: '8:50 - 9:10', group: 'Skupina 10', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '9:10 - 9:30', group: 'Skupina 10', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '9:50 - 10:10', group: 'Skupina 10', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '10:10 - 10:30', group: 'Skupina 10', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '10:30 - 10:50', group: 'Skupina 10', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '10:50 - 11:10', group: 'Skupina 10', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '11:10 - 11:30', group: 'Skupina 10', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '11:30 - 11:50', group: 'Skupina 10', activity: 'Robotika', location: 'Robotika' },
+                { time: '11:50 - 12:10', group: 'Skupina 10', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '12:10 - 12:30', group: 'Skupina 10', activity: 'iPady (animace)', location: 'Učebna 506' },
+
+                { time: '8:30 - 8:50', group: 'Skupina 11', activity: 'Zdobení perníčků', location: 'Kuchyňka' },
+                { time: '8:50 - 9:10', group: 'Skupina 11', activity: 'Malování karikatur', location: 'Před školou' },
+                { time: '9:10 - 9:30', group: 'Skupina 11', activity: 'Retro třída', location: 'Učebna 503' },
+                { time: '9:50 - 10:10', group: 'Skupina 11', activity: 'Sportovní aktivity', location: 'Hřiště, gymnastický sál' },
+                { time: '10:10 - 10:30', group: 'Skupina 11', activity: 'Kreativní dílna', location: 'Učebna 302' },
+                { time: '10:30 - 10:50', group: 'Skupina 11', activity: 'Školní kvíz', location: 'Učebna 504' },
+                { time: '10:50 - 11:10', group: 'Skupina 11', activity: 'Hravá věda', location: 'Učebna 508' },
+                { time: '11:10 - 11:30', group: 'Skupina 11', activity: 'Robotika', location: 'Robotika' },
+                { time: '11:30 - 11:50', group: 'Skupina 11', activity: 'Stolní hry', location: 'Učebna 305' },
+                { time: '11:50 - 12:10', group: 'Skupina 11', activity: 'iPady (animace)', location: 'Učebna 506' },
+                { time: '12:10 - 12:30', group: 'Skupina 11', activity: 'Ochutnávka ovoce', location: 'Školní jídelna' },
+            ];
+
+            const groupSelect = document.getElementById('group-select');
+            const stationSelect = document.getElementById('station-select');
+            const scheduleDisplay = document.getElementById('schedule-display');
+            const resetButton = document.getElementById('reset-button');
+
+            const groups = [...new Set(scheduleData.map(item => item.group))].sort((a, b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
+            const stations = [...new Set(scheduleData.map(item => item.activity))].sort();
+
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group;
+                option.textContent = group;
+                groupSelect.appendChild(option);
+            });
+
+            stations.forEach(station => {
+                const option = document.createElement('option');
+                option.value = station;
+                option.textContent = station;
+                stationSelect.appendChild(option);
+            });
+
+            function updateDisplay() {
+                const selectedGroup = groupSelect.value;
+                const selectedStation = stationSelect.value;
+
+                if (selectedGroup === 'all' && selectedStation === 'all') {
+                    scheduleDisplay.innerHTML = '<p class="text-center text-gray-500">Zvolte skupinu nebo stanoviště pro zobrazení programu.</p>';
+                    return;
+                }
+
+                let filteredData;
+                let isGroupView = selectedGroup !== 'all';
+
+                if (isGroupView) {
+                    filteredData = scheduleData.filter(item => item.group === selectedGroup);
+                    stationSelect.value = 'all'; 
+                } else {
+                    filteredData = scheduleData.filter(item => item.activity === selectedStation);
+                    groupSelect.value = 'all';
+                }
+
+                if (filteredData.length === 0) {
+                    scheduleDisplay.innerHTML = '<p class="text-center text-gray-500">Pro tuto volbu nebyly nalezeny žádné záznamy.</p>';
+                    return;
+                }
+                
+                let title = isGroupView ? `Program pro ${selectedGroup}` : `Návštěvnost stanoviště: ${selectedStation}`;
+
+                let tableHTML = `<h3 class="text-xl font-semibold text-center mb-4 text-gray-700">${title}</h3>
+                <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Čas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${isGroupView ? 'Stanoviště' : 'Skupina'}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Místo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">`;
+
+                if(isGroupView){
+                    const snackTime = { time: '9:30 - 9:50', activity: 'Svačina', location: '---' };
+                    const fullSchedule = [...filteredData, snackTime].sort((a,b) => a.time.localeCompare(b.time));
+                    
+                    fullSchedule.forEach(item => {
+                        const isSnack = item.activity === 'Svačina';
+                        tableHTML += `<tr class="${isSnack ? 'bg-amber-50' : ''}">
+                            <td class="px-6 py-4 whitespace-nowrap font-medium ${isSnack ? 'text-amber-800' : 'text-gray-900'}">${item.time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap ${isSnack ? 'font-bold text-amber-800' : 'text-gray-500'}">${item.activity}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.location}</td>
+                        </tr>`;
+                    });
+                } else {
+                     filteredData.forEach(item => {
+                        tableHTML += `<tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${item.time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.group}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.location}</td>
+                        </tr>`;
+                    });
+                }
+                
+                tableHTML += `</tbody></table></div>`;
+                scheduleDisplay.innerHTML = tableHTML;
+            }
+            
+            function resetFilters() {
+                groupSelect.value = 'all';
+                stationSelect.value = 'all';
+                updateDisplay();
+            }
+
+            groupSelect.addEventListener('change', updateDisplay);
+            stationSelect.addEventListener('change', updateDisplay);
+            resetButton.addEventListener('click', resetFilters);
+
+            const activityCategories = {
+                'Kreativní': ['Malování karikatur', 'Kreativní dílna', 'Zdobení perníčků'],
+                'Vzdělávací': ['Retro třída', 'Školní kvíz', 'Hravá věda'],
+                'Technologické': ['Robotika', 'iPady (animace)'],
+                'Sportovní': ['Sportovní aktivity'],
+                'Gastronomické': ['Ochutnávka ovoce'],
+                'Herní': ['Stolní hry']
+            };
+
+            const categoryCounts = Object.keys(activityCategories).reduce((acc, category) => {
+                acc[category] = activityCategories[category].length;
+                return acc;
+            }, {});
+
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        label: 'Počet aktivit',
+                        data: Object.values(categoryCounts),
+                        backgroundColor: [
+                            '#34d399', // emerald-400
+                            '#60a5fa', // blue-400
+                            '#fb923c', // orange-400
+                            '#f87171', // red-400
+                            '#a78bfa', // violet-400
+                            '#fbbf24'  // amber-400
+                        ],
+                        borderColor: '#f8f7f4',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                             labels: {
+                                padding: 20,
+                                color: '#333',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed;
+                                    }
+                                    return label + ' aktivit';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function populateMasterTable() {
+                const masterTable = document.getElementById('master-schedule-table');
+                const thead = masterTable.querySelector('thead');
+                const tbody = masterTable.querySelector('tbody');
+
+                const times = ['8:30-8:50', '8:50-9:10', '9:10-9:30', '9:50-10:10', '10:10-10:30', '10:30-10:50', '10:50-11:10', '11:10-11:30', '11:30-11:50', '11:50-12:10', '12:10-12:30'];
+                
+                let headerHTML = '<tr><th scope="col" class="py-3 px-6">Skupina</th>';
+                times.forEach(time => headerHTML += `<th scope="col" class="py-3 px-6">${time.replace('-', ' - ')}</th>`);
+                headerHTML += '</tr>';
+                thead.innerHTML = headerHTML;
+
+                let bodyHTML = '';
+                groups.forEach((group, index) => {
+                    bodyHTML += `<tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b">
+                        <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">${group}</td>`;
+                    
+                    const groupSchedule = scheduleData.filter(item => item.group === group);
+
+                    times.forEach(timeSlot => {
+                       const formattedTimeSlot = timeSlot.replace('-', ' - ');
+                       const activity = groupSchedule.find(item => item.time === formattedTimeSlot);
+                       bodyHTML += `<td class="py-4 px-6">${activity ? activity.activity : '---'}</td>`;
+                    });
+
+                    bodyHTML += '</tr>';
+                });
+                tbody.innerHTML = bodyHTML;
+            }
+
+            populateMasterTable();
+
+            // Logika pro nahrávání fotek a galerii
+            const photoUploadInput = document.getElementById('photo-upload-input');
+            const photoGalleryGrid = document.getElementById('photo-gallery-grid');
+            const uploadStatus = document.getElementById('upload-status');
+
+            photoUploadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check if auth is ready before trying to upload.
+                    if (auth.currentUser) {
+                         uploadFile(file);
+                    } else {
+                        uploadStatus.textContent = 'Prosím, zkuste to znovu za pár vteřin. Služba se inicializuje.';
+                        uploadStatus.classList.remove('hidden');
+                    }
+                }
+            });
+
+            // Reakce na změny v databázi pro zobrazení fotek
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    onSnapshot(query(collection(db, `artifacts/${appId}/public/data/photos`), orderBy('timestamp', 'desc')), (snapshot) => {
+                        if (snapshot.docs.length === 0) {
+                            photoGalleryGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Zde se zobrazí nahrané fotografie.</p>';
+                        } else {
+                            photoGalleryGrid.innerHTML = '';
+                            snapshot.docs.forEach(doc => {
+                                const photoData = doc.data();
+                                const imgDiv = document.createElement('div');
+                                imgDiv.classList.add('aspect-square', 'overflow-hidden', 'rounded-lg');
+                                imgDiv.innerHTML = `<img src="${photoData.photoURL}" alt="Fotografie z akce">`;
+                                photoGalleryGrid.appendChild(imgDiv);
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
