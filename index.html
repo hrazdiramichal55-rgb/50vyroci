@@ -50,6 +50,7 @@
 <body class="antialiased">
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
+            <img src="Snímek%20obrazovky%202024-12-05%20205208.png" alt="Logo ZŠ MŠ Ostrov u Macochy" class="mx-auto h-24 mb-4">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Harmonogram Akce</h1>
             <p class="text-lg md:text-xl text-gray-600 mt-2">Oslava 50. výročí založení školy</p>
         </header>
@@ -133,18 +134,13 @@
                 </div>
             </section>
 
-            <section id="photo-gallery" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+            <section id="photo-link-section" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-semibold text-gray-700">Fotogalerie z akce</h2>
-                    <p class="text-gray-600 mt-2">Sdílejte své fotografie z dnešní akce.</p>
+                    <p class="text-gray-600 mt-2">Fotky z akce najdete v naší sdílené složce na Google Disku.</p>
                 </div>
-                <div class="flex flex-col items-center mb-6">
-                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden">
-                    <label for="photo-upload-input" class="cursor-pointer bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 transition-colors font-medium">Nahrát fotku</label>
-                    <div id="upload-status" class="mt-2 text-gray-500 hidden">Nahrávám...</div>
-                </div>
-                <div id="photo-gallery-grid" class="photo-gallery grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    <p class="col-span-full text-center text-gray-500">Zde se zobrazí nahrané fotografie.</p>
+                <div class="flex justify-center">
+                    <a href="https://drive.google.com/drive/folders/19xO_2oWYizGD0q3l_H-T_SAimfo0KqrA?usp=drive_link" target="_blank" class="w-full md:w-auto bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 transition-colors font-medium text-center">Otevřít fotogalerii</a>
                 </div>
             </section>
 
@@ -152,72 +148,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-
-        // Globalní proměnné pro Firebase a ID aplikace
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let app, db, auth, storage;
-
-        // Inicializace a autentizace
-        const initFirebase = async () => {
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                storage = getStorage(app);
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Chyba při přihlašování k Firebase:", error);
-            }
-        };
-
-        const uploadFile = async (file) => {
-            const userId = auth.currentUser?.uid;
-            if (!userId) {
-                const uploadStatus = document.getElementById('upload-status');
-                uploadStatus.textContent = 'Chyba: Pro nahrání fotek se musíte přihlásit.';
-                uploadStatus.classList.remove('hidden');
-                return;
-            }
-
-            const uploadStatus = document.getElementById('upload-status');
-            uploadStatus.textContent = 'Nahrávám...';
-            uploadStatus.classList.remove('hidden');
-
-            const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const storagePath = `artifacts/${appId}/public/images/${uniqueId}-${file.name}`;
-            const storageRef = ref(storage, storagePath);
-
-            try {
-                await uploadBytes(storageRef, file);
-                const photoURL = await getDownloadURL(storageRef);
-
-                await addDoc(collection(db, `artifacts/${appId}/public/data/photos`), {
-                    userId: userId,
-                    photoURL: photoURL,
-                    timestamp: serverTimestamp(),
-                });
-
-                uploadStatus.textContent = 'Fotka úspěšně nahrána!';
-            } catch (error) {
-                console.error("Chyba při nahrávání fotky:", error);
-                uploadStatus.textContent = `Chyba při nahrávání: ${error.message}`;
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', async function () {
-            await initFirebase();
             
             const scheduleData = [
                 { time: '8:30 - 8:50', group: 'Skupina 1', activity: 'Malování karikatur', location: 'Před školou' },
@@ -547,44 +478,6 @@
             }
 
             populateMasterTable();
-
-            // Logika pro nahrávání fotek a galerii
-            const photoUploadInput = document.getElementById('photo-upload-input');
-            const photoGalleryGrid = document.getElementById('photo-gallery-grid');
-            const uploadStatus = document.getElementById('upload-status');
-
-            photoUploadInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    // Check if auth is ready before trying to upload.
-                    if (auth.currentUser) {
-                         uploadFile(file);
-                    } else {
-                        uploadStatus.textContent = 'Prosím, zkuste to znovu za pár vteřin. Služba se inicializuje.';
-                        uploadStatus.classList.remove('hidden');
-                    }
-                }
-            });
-
-            // Reakce na změny v databázi pro zobrazení fotek
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    onSnapshot(query(collection(db, `artifacts/${appId}/public/data/photos`), orderBy('timestamp', 'desc')), (snapshot) => {
-                        if (snapshot.docs.length === 0) {
-                            photoGalleryGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Zde se zobrazí nahrané fotografie.</p>';
-                        } else {
-                            photoGalleryGrid.innerHTML = '';
-                            snapshot.docs.forEach(doc => {
-                                const photoData = doc.data();
-                                const imgDiv = document.createElement('div');
-                                imgDiv.classList.add('aspect-square', 'overflow-hidden', 'rounded-lg');
-                                imgDiv.innerHTML = `<img src="${photoData.photoURL}" alt="Fotografie z akce">`;
-                                photoGalleryGrid.appendChild(imgDiv);
-                            });
-                        }
-                    });
-                }
-            });
         });
     </script>
 </body>
