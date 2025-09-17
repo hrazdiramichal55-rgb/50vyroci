@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Study -->
-    <!-- Application Structure Plan: A dashboard-style single-page application. The top section provides a static overview of the day's main events. The central part is an interactive dashboard allowing users to filter the detailed schedule either by student group or by activity station using dropdown menus. This provides immediate access to task-specific information, which is more user-friendly than scanning a large table. Additionally, a doughnut chart visualizes the thematic distribution of activities, offering a quick analytical insight. This structure was chosen to transform the static reports into a user-centric tool that answers the most likely questions from organizers and teachers efficiently. -->
+    <!-- Chosen Palette: Energetic and Striking (Orange, Green, Black) -->
+    <!-- Application Structure Plan: A dashboard-style single-page application. The top section provides a static overview of the day's main events. The central part is an an interactive dashboard allowing users to filter the detailed schedule either by student group or by activity station using dropdown menus. This provides immediate access to task-specific information, which is more user-friendly than scanning a large table. Additionally, a doughnut chart visualizes the thematic distribution of activities, offering a quick analytical insight. This structure was chosen to transform the static reports into a user-centric tool that answers the most likely questions from organizers and teachers efficiently. -->
     <!-- Visualization & Content Choices: 
         1. Main Timeline (Report Info: Harmonogram_akce.md) -> Goal: Inform -> Presentation: Styled cards (HTML/Tailwind) -> Interaction: None -> Justification: Provides high-level context of the day's flow.
         2. Interactive Schedule (Report Info: Rozpis_stanovišť.md) -> Goal: Organize/Filter -> Presentation: Dropdown filters and a dynamically updated content area -> Interaction: User selects a group or station, JS filters data and updates the view -> Justification: Core interactive feature. Allows users to easily find specific schedules without reading a complex grid. Method: Vanilla JS.
@@ -21,8 +21,18 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f7f4;
-            color: #333;
+            background-image: url('https://www.zsostrovum.cz/evt_image.php?img=19301');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
+            color: #1a202c; 
+        }
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .chart-container {
             position: relative;
@@ -47,42 +57,42 @@
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased text-gray-800">
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
-            <img src="Snímek%20obrazovky%202024-12-05%20205208.png" alt="Logo ZŠ MŠ Ostrov u Macochy" class="mx-auto h-24 mb-4">
+            <img src="https://www.zsostrovum.cz/data/multipage/editor/editor-6-46-cs_2.png?gcm_date=1700646047" alt="ZŠ MŠ Ostrov u Macochy" class="mx-auto h-24 mb-4">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Harmonogram Akce</h1>
-            <p class="text-lg md:text-xl text-gray-600 mt-2">Oslava 50. výročí založení školy</p>
+            <p class="text-4x1 md:text-4xl text-orange-600 mt-2">Oslava 50. výročí založení školy</p>
         </header>
 
-        <main>
+        <main class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             <section id="timeline" class="mb-12">
                 <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">Hlavní body dne</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                        <p class="font-bold text-lg text-teal-600">8:00 - 8:15</p>
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-green-600">8:00 - 8:15</p>
                         <p class="text-gray-700">Slavnostní zahájení</p>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                        <p class="font-bold text-lg text-teal-600">8:15 - 8:30</p>
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="font-bold text-lg text-green-600">8:15 - 8:30</p>
                         <p class="text-gray-700">Vystoupení 1. třídy</p>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 col-span-1 lg:col-span-1">
-                        <p class="font-bold text-lg text-sky-600">8:30 - 12:30</p>
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200 col-span-1 lg:col-span-1">
+                        <p class="font-bold text-lg text-orange-600">8:30 - 12:30</p>
                         <p class="text-gray-700">Program na stanovištích</p>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200">
                         <p class="font-bold text-lg text-amber-600">9:30 - 9:50</p>
                         <p class="text-gray-700">Svačinová přestávka</p>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div class="bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200">
                         <p class="font-bold text-lg text-rose-600">12:30</p>
                         <p class="text-gray-700">Ukončení akce</p>
                     </div>
                 </div>
             </section>
 
-            <section id="interactive-dashboard" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+            <section id="interactive-dashboard" class="bg-gray-100 p-6 rounded-xl shadow-md border border-gray-200 mb-12">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-semibold text-gray-700">Interaktivní přehled programu</h2>
                     <p class="text-gray-600 mt-2">Zvolte skupinu nebo stanoviště pro zobrazení detailního časového plánu.</p>
@@ -90,18 +100,18 @@
                 <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-6">
                     <div class="w-full md:w-1/3">
                         <label for="group-select" class="block text-sm font-medium text-gray-700 mb-1">Zobrazit podle skupiny:</label>
-                        <select id="group-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                        <select id="group-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-400 focus:border-green-400 bg-white text-gray-800">
                             <option value="all">Vyberte skupinu</option>
                         </select>
                     </div>
                     <div class="w-full md:w-1/3">
                         <label for="station-select" class="block text-sm font-medium text-gray-700 mb-1">Zobrazit podle stanoviště:</label>
-                        <select id="station-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                        <select id="station-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-400 focus:border-green-400 bg-white text-gray-800">
                             <option value="all">Vyberte stanoviště</option>
                         </select>
                     </div>
                      <div class="w-full md:w-auto mt-4 md:mt-5">
-                        <button id="reset-button" class="w-full md:w-auto bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors">Resetovat</button>
+                        <button id="reset-button" class="w-full md:w-auto bg-green-400 text-gray-900 px-4 py-2 rounded-md hover:bg-green-500 transition-colors">Resetovat</button>
                     </div>
                 </div>
                 <div id="schedule-display" class="mt-4 min-h-[200px]">
@@ -110,21 +120,21 @@
             </section>
             
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
-                <div id="chart-section" class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <div id="chart-section" class="bg-gray-100 p-6 rounded-xl shadow-md border border-gray-200">
                     <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Rozložení typů aktivit</h2>
                     <div class="chart-container">
                         <canvas id="activityChart"></canvas>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-md border border-gray-200">
                      <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Celkový přehled</h2>
                      <p class="text-center text-gray-600 mb-4">Níže naleznete kompletní matici rozvrhu pro všechny skupiny a časy. Tato tabulka může být užitečná pro koordinátory a učitele, kteří potřebují vidět celkový obraz dne.</p>
-                     <details class="bg-gray-50 p-4 rounded-md">
-                        <summary class="font-semibold cursor-pointer text-teal-700 hover:text-teal-800">Zobrazit kompletní rozpis stanovišť</summary>
+                     <details class="bg-white p-4 rounded-md">
+                        <summary class="font-semibold cursor-pointer text-orange-600 hover:text-orange-700">Zobrazit kompletní rozpis stanovišť</summary>
                         <div class="overflow-x-auto mt-4">
                             <table id="master-schedule-table" class="min-w-full text-sm text-left text-gray-500">
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-200">
                                 </thead>
                                 <tbody>
                                 </tbody>
@@ -134,13 +144,13 @@
                 </div>
             </section>
 
-            <section id="photo-link-section" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+            <section id="photo-link-section" class="bg-gray-100 p-6 rounded-xl shadow-md border border-gray-200 mb-12">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-semibold text-gray-700">Fotogalerie z akce</h2>
                     <p class="text-gray-600 mt-2">Fotky z akce najdete v naší sdílené složce na Google Disku.</p>
                 </div>
                 <div class="flex justify-center">
-                    <a href="https://drive.google.com/drive/folders/19xO_2oWYizGD0q3l_H-T_SAimfo0KqrA?usp=drive_link" target="_blank" class="w-full md:w-auto bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 transition-colors font-medium text-center">Otevřít fotogalerii</a>
+                    <a href="https://drive.google.com/drive/folders/19xO_2oWYizGD0q3l_H-T_SAimfo0KqrA?usp=drive_link" target="_blank" class="w-full md:w-auto bg-green-400 text-gray-900 px-6 py-3 rounded-md hover:bg-green-500 transition-colors font-medium text-center">Otevřít fotogalerii</a>
                 </div>
             </section>
 
@@ -288,9 +298,24 @@
             const stationSelect = document.getElementById('station-select');
             const scheduleDisplay = document.getElementById('schedule-display');
             const resetButton = document.getElementById('reset-button');
+            const masterTable = document.getElementById('master-schedule-table');
+            const thead = masterTable.querySelector('thead');
+            const tbody = masterTable.querySelector('tbody');
 
             const groups = [...new Set(scheduleData.map(item => item.group))].sort((a, b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
             const stations = [...new Set(scheduleData.map(item => item.activity))].sort();
+
+            const parseTime = (timeStr) => {
+                const [start, end] = timeStr.split(' - ').map(t => {
+                    const [hour, minute] = t.split(':').map(Number);
+                    return hour * 60 + minute;
+                });
+                return { start, end };
+            };
+
+            const sortScheduleDataAsc = (data) => {
+                return data.sort((a, b) => parseTime(a.time).start - parseTime(b.time).start);
+            };
 
             groups.forEach(group => {
                 const option = document.createElement('option');
@@ -336,36 +361,31 @@
                 let tableHTML = `<h3 class="text-xl font-semibold text-center mb-4 text-gray-700">${title}</h3>
                 <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-200">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Čas</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${isGroupView ? 'Stanoviště' : 'Skupina'}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Místo</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Čas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">${isGroupView ? 'Stanoviště' : 'Skupina'}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Místo</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">`;
-
+                
+                let sortedData = [];
                 if(isGroupView){
                     const snackTime = { time: '9:30 - 9:50', activity: 'Svačina', location: '---' };
-                    const fullSchedule = [...filteredData, snackTime].sort((a,b) => a.time.localeCompare(b.time));
-                    
-                    fullSchedule.forEach(item => {
-                        const isSnack = item.activity === 'Svačina';
-                        tableHTML += `<tr class="${isSnack ? 'bg-amber-50' : ''}">
-                            <td class="px-6 py-4 whitespace-nowrap font-medium ${isSnack ? 'text-amber-800' : 'text-gray-900'}">${item.time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap ${isSnack ? 'font-bold text-amber-800' : 'text-gray-500'}">${item.activity}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.location}</td>
-                        </tr>`;
-                    });
+                    sortedData = sortScheduleDataAsc([...filteredData, snackTime]);
                 } else {
-                     filteredData.forEach(item => {
-                        tableHTML += `<tr>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${item.time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.group}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">${item.location}</td>
-                        </tr>`;
-                    });
+                    sortedData = sortScheduleDataAsc(filteredData);
                 }
+
+                sortedData.forEach(item => {
+                    const isSnack = item.activity === 'Svačina';
+                    tableHTML += `<tr class="${isSnack ? 'bg-amber-100' : 'bg-white'}">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium ${isSnack ? 'text-amber-800' : 'text-gray-900'}">${item.time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap ${isSnack ? 'font-bold text-amber-800' : 'text-gray-700'}">${item.activity}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">${item.location}</td>
+                    </tr>`;
+                });
                 
                 tableHTML += `</tbody></table></div>`;
                 scheduleDisplay.innerHTML = tableHTML;
@@ -404,14 +424,14 @@
                         label: 'Počet aktivit',
                         data: Object.values(categoryCounts),
                         backgroundColor: [
+                            '#fb923c', // orange-400
                             '#34d399', // emerald-400
                             '#60a5fa', // blue-400
-                            '#fb923c', // orange-400
                             '#f87171', // red-400
                             '#a78bfa', // violet-400
                             '#fbbf24'  // amber-400
                         ],
-                        borderColor: '#f8f7f4',
+                        borderColor: '#ffffff', 
                         borderWidth: 4
                     }]
                 },
@@ -452,10 +472,10 @@
                 const thead = masterTable.querySelector('thead');
                 const tbody = masterTable.querySelector('tbody');
 
-                const times = ['8:30-8:50', '8:50-9:10', '9:10-9:30', '9:50-10:10', '10:10-10:30', '10:30-10:50', '10:50-11:10', '11:10-11:30', '11:30-11:50', '11:50-12:10', '12:10-12:30'];
+                const times = ['8:30 - 8:50', '8:50 - 9:10', '9:10 - 9:30', '9:50 - 10:10', '10:10 - 10:30', '10:30 - 10:50', '10:50 - 11:10', '11:10 - 11:30', '11:30 - 11:50', '11:50 - 12:10', '12:10 - 12:30'];
                 
                 let headerHTML = '<tr><th scope="col" class="py-3 px-6">Skupina</th>';
-                times.forEach(time => headerHTML += `<th scope="col" class="py-3 px-6">${time.replace('-', ' - ')}</th>`);
+                times.forEach(time => headerHTML += `<th scope="col" class="py-3 px-6">${time}</th>`);
                 headerHTML += '</tr>';
                 thead.innerHTML = headerHTML;
 
@@ -464,12 +484,11 @@
                     bodyHTML += `<tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b">
                         <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">${group}</td>`;
                     
-                    const groupSchedule = scheduleData.filter(item => item.group === group);
-
+                    const groupSchedule = sortScheduleDataAsc(scheduleData.filter(item => item.group === group));
+                    
                     times.forEach(timeSlot => {
-                       const formattedTimeSlot = timeSlot.replace('-', ' - ');
-                       const activity = groupSchedule.find(item => item.time === formattedTimeSlot);
-                       bodyHTML += `<td class="py-4 px-6">${activity ? activity.activity : '---'}</td>`;
+                        const activity = groupSchedule.find(item => item.time === timeSlot);
+                        bodyHTML += `<td class="py-4 px-6 text-gray-700">${activity ? activity.activity : '---'}</td>`;
                     });
 
                     bodyHTML += '</tr>';
